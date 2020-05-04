@@ -606,13 +606,16 @@ export class MailViewer {
 							type: ButtonType.Dropdown,
 						})
 					}
-					moreButtons.push({
-						label: "showHeaders_action",
-						click: () => this._showHeaders(),
-						icon: () => Icons.ListUnordered,
-						type: ButtonType.Dropdown,
-					})
-					if (this.mail.phishingStatus === MailPhishingStatus.UNKNOWN && !isTutanotaTeamMail(this.mail)) {
+					if (logins.isInternalUserLoggedIn()) {
+						moreButtons.push({
+							label: "showHeaders_action",
+							click: () => this._showHeaders(),
+							icon: () => Icons.ListUnordered,
+							type: ButtonType.Dropdown,
+						})
+					}
+					if (this.mail.phishingStatus === MailPhishingStatus.UNKNOWN && !isTutanotaTeamMail(this.mail)
+						&& logins.isInternalUserLoggedIn()) {
 						moreButtons.push({
 							label: "reportEmail_action",
 							click: () => this._reportMail(),
@@ -1003,14 +1006,14 @@ export class MailViewer {
 	}
 
 	_createBubbleContextButtons(address: MailAddress | EncryptedMailAddress, defaultInboxRuleField: ?InboxRuleTypeEnum): Promise<Array<ButtonAttrs>> {
+		const buttons = [
+			{
+				label: "copy_action",
+				type: ButtonType.Secondary,
+				click: () => copyToClipboard(address.address),
+			}
+		]
 		if (logins.getUserController().isInternalUser()) {
-			const buttons = [
-				{
-					label: "copy_action",
-					type: ButtonType.Secondary,
-					click: () => copyToClipboard(address.address),
-				}
-			]
 			let contactsPromise = Promise.resolve()
 			if (!logins.isEnabled(FeatureType.DisableContacts)) {
 				contactsPromise = searchForContactByMailAddress(address.address).then(contact => {
@@ -1064,7 +1067,7 @@ export class MailViewer {
 				})
 			})
 		} else {
-			return Promise.resolve([])
+			return Promise.resolve(buttons)
 		}
 	}
 
